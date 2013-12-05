@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 		}
 
 		for (j = 0; j < 16; j++) {		
-			__sync_bool_compare_and_swap(&lock[j], 1 << 31, 0);
+			__sync_fetch_and_sub(&lock[j], 1 << 31);
 		}
 #endif
 	}
