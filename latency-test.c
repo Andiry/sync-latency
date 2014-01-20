@@ -8,6 +8,7 @@
 #include<stdlib.h>
 #include<stdint.h>
 #include<pthread.h>
+#include<sched.h>
 #include<sys/mman.h>
 #include<sys/time.h>
 
@@ -48,8 +49,8 @@ int main(int argc, char **argv)
 	char *buf;
 	FILE *output;
 	pthread_rwlock_t rw_lock;
-	uint64_t lock[16] = {0};
-	uint64_t wr_lock = 0;
+	volatile uint32_t lock[16] = {0};
+	uint32_t wr_lock = 0;
 	int cpu_id;
 	int j, lock_held;
 
@@ -59,12 +60,17 @@ int main(int argc, char **argv)
 	printf("cpuid: %d\n", cpu_id);
 
 	gettimeofday(&begin, &tz);
+	cpu_id = sched_getcpu();
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (i = 0; i < count; i++) {
-		while(__sync_fetch_and_add(&lock[cpu_id], 1) >= (1 << 31))
-			__sync_fetch_and_sub(&lock[cpu_id], 1);
+		pthread_rwlock_wrlock(&rw_lock);
+		pthread_rwlock_unlock(&rw_lock);
 
-		__sync_fetch_and_sub(&lock[cpu_id], 1);
+//		while(__sync_fetch_and_add(&lock[cpu_id], 1) >= (1 << 31))
+//			__sync_fetch_and_sub(&lock[cpu_id], 1);
+
+//		__sync_fetch_and_sub(&lock[cpu_id], 1);
+
 #if 0
 		for (j = 0; j < 16; j++) {		
 			while (!__sync_bool_compare_and_swap(&lock[j], 0, 1 << 31))
